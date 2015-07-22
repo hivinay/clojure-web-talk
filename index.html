@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Title</title>
+    <title>Intro to Web Dev with Clojure</title>
     <meta charset="utf-8">
     <style>
       @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
@@ -15,11 +15,14 @@
       }
       .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
     </style>
+    <style>
+     .blackBackground {background-color:#000;color: white;}
+    </style>
   </head>
   <body>
     <textarea id="source">
 
-class: center, middle
+class: center, middle, blackBackground
 
 # Web stuff with Clojure!
 ### A talk by Vinay Hiremath (2015-07-23)
@@ -33,8 +36,123 @@ class: center, middle
 
 ---
 
-# What is Clojure?
-* The best language on Earth!
+# What is Clojure? (besides the best language ever!)
+* A dialect of the Lisp language
+
+* Based on the Java Virtual Machine
+
+* Strong emphasis on functional programming
+
+---
+
+# What does that mean for me?
+* Relatively small language so it's easy to learn
+
+* Quite fast because it compiles to Java bytecode and is not interpreted
+
+* The abstractions make handling sequences of data extremely easy
+
+* Easy to reason about large projects because state is effectively nonexistent
+
+---
+
+# Great, where do I sign up?
+* Set up Leiningen (http://leiningen.org/)
+  * Or if you're on Windows, try this installer: http://leiningen-win-installer.djpowell.net/
+
+* Leiningen is a comprehensive build tool for managing your Clojure projects
+
+---
+
+# Some basics
+* Variables are basically always immutable in Clojure
+  * `(def my-name "Vinay")`
+  * This would create a global constant variable (string) called `name` with the value `"Vinay"`
+
+* Clojure embodies the *code is data* philosophy, so function implementations are assigned to function names
+  * `(def my-function (fn [x] (+ 5 x)))`
+  * This would create a function called `my-function` that returns the sum of `5` and a parameter `x`
+
+* Let's simplify that by sticking to the `defn` macro
+  * `(defn my-function [x] (+ 5 x))`
+
+* As you can see, `defn` is followed by:
+  * The function name
+  * The function parameters in `[ ]`
+  * The function implementation
+
+---
+
+# What is a backend?
+* It's basically a process on a server hidden from view that handles data
+
+* It can both get and send data to a client (eg. a web page or mobile app)
+
+* This allows for everything to stay in sync because the clients only need to handle the interface
+
+* The backend often includes a database, which is a place to collect and easily look through large amounts of data
+
+---
+
+# What are we making?
+* We will be making the backend for a simple contact list that allows for:
+  * Adding contacts (by name and email) to the database
+  * Listing out contacts currently in the database
+
+* The main tool we will be using is `Compojure`, a routing library for Clojure that uses Ring
+
+* We will also be using a `PostgreSQL` database to hold data on each contact
+
+---
+
+# Let's begin!
+* You should have Leiningen installed, and can verify this by typing `lein -v` into a shell (Terminal or Command Prompt)
+  * If you do not, check out the slides later as they are posted online!
+
+* You should also have today's code downloaded and saved
+  * If not, you can find them here: github.com/hivinay/contacts-backend-clj
+
+* Let's go over all of the code before we test it out
+
+---
+
+# The `db.clj` file
+* You can find this file inside the project under `src/contacts-backend-clj/db.clj`
+
+* This file defines functions that are used to access the database
+
+* In this case, we only need functions for adding a contact and getting a list of every contact
+
+```
+(defn add-contact ;; Function name
+  [item] ;; Function parameter
+  (db/insert! postgres-db db-name ;; Function that inserts into the database
+              {:name (:name item)
+               :email (:email item)}))
+
+(defn get-contacts
+  []
+  (db/query postgres-db ["SELECT * FROM contacts"]))
+
+```
+---
+
+# The `core.clj` file (1/2)
+* You can find this file in the same folder as the `db.clj`
+
+* This file defines the main functions that are used to handle requests
+
+* We need to implement each route so that a user can add a contact and view all contacts, including the helper files needed for these functions
+
+* Defining empty routes that we will fill in later
+```
+(defroutes contacts-app
+  (GET "/contacts" []
+       (get-a-list-of-all-contacts))
+  (POST "/contacts" request
+       (add-the-note-in-the-contacts)))
+```
+
 
     </textarea>
     <script src="https://gnab.github.io/remark/downloads/remark-latest.min.js">
