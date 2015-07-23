@@ -30,7 +30,7 @@
     </style>
   </head>
   <body>
-    <textarea id="source">
+      <textarea id="source">
 
 class: center, middle, blackBackground
 
@@ -146,22 +146,28 @@ class: center, middle, blackBackground
 # The `db.clj` file
 * You can find this file inside the project under `src/contacts-backend-clj/db.clj`
 
-* This file defines functions that are used to access the database
-
-* In this case, we only need functions for adding a contact and getting a list of every contact
-
 ```
-(defn add-contact ;; Function name
-  [item] ;; Function parameter
-  (db/insert! postgres-db db-name ;; Function that inserts into the database
-              {:name (:name item)
-               :email (:email item)}))
-
 (defn get-contacts
   []
   (db/query postgres-db ["SELECT * FROM contacts"]))
 
 ```
+* In this case, we are using a SQL query as the method of getting data instead of Clojure functions
+---
+
+# The `db.clj` file
+```
+(defn add-item
+  [item]
+  (jdbc/insert! postgres-db :contacts
+              {:name (:name item)
+               :email (:email item)}))
+```
+* Keep in mind that a map with `:name` and `:email` keys is passed into the function
+
+* Using those keywords as a function with the map (`item` in this case) as the argument yields the values assigned to the keys
+  * Eg. `(:name {:name "John" :email "john@email.com"}) ;; Returns the string "John"`
+
 ---
 
 # The routes in `core.clj`
@@ -216,7 +222,7 @@ class: center, middle, blackBackground
       (run-server (handler) {:port (read-string (System/getenv "PORT"))})))
 ```
 
-* The `handler` function can also be written as this mess:
+* The `handler` function can also be written as this less comprehensible code:
 ```
 (defn handler
   []
@@ -249,9 +255,10 @@ class: center, middle, blackBackground
   * Use `curl` to test it out with (replacing your app path):
       * View: `curl http://contacts-clj.herokuapp.com/contacts`
 
-      * Add: `curl -d '{"name":"vinay", "email":"my@email.com"}' contacts-clj.herokuapp.com/contacts`
+      * Add: `curl -d '{"name":"vinay", "email":"my@email.com"}' contacts-clj.herokuapp.
+      </textarea>com/
+      contacts`
 
-    </textarea>
     <script src="https://gnab.github.io/remark/downloads/remark-latest.min.js">
     </script>
     <script>
