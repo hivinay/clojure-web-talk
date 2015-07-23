@@ -7,16 +7,26 @@
       @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
       @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
       @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
-
-      body { font-family: 'Droid Serif'; }
+     body {
+         font-family: 'Droid Serif';
+     }
+     #source {
+         font-size: 40px;
+     }
       h1, h2, h3 {
         font-family: 'Yanone Kaffeesatz';
         font-weight: normal;
       }
-      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
-    </style>
-    <style>
-     .blackBackground {background-color:#000;color: white;}
+     .remark-code, .remark-inline-code {
+         font-family: 'Ubuntu Mono';
+     }
+     .blackBackground {
+         background-color: #000;
+         color: white;
+     }
+     img {
+         max-width: 40%;
+     }
     </style>
   </head>
   <body>
@@ -62,17 +72,22 @@ class: center, middle, blackBackground
 
 * Leiningen is a comprehensive build tool for managing your Clojure projects
 
+* Today, we'll stick to deploying and testing out an app on Heroku (an online platform to run apps)
+
 ---
 
 # Some basics
 * Variables are basically always immutable in Clojure
   * `(def my-name "Vinay")`
-  * This would create a global constant variable (string) called `name` with the value `"Vinay"`
+  * Creates a global constant variable (string) called `name` with the value `"Vinay"`
 
 * Clojure embodies the *code is data* philosophy, so function implementations are assigned to function names
   * `(def my-function (fn [x] (+ 5 x)))`
-  * This would create a function called `my-function` that returns the sum of `5` and a parameter `x`
+  * Creates a function called `my-function` that returns the sum of `5` and a parameter `x`
 
+---
+
+# Some more
 * Let's simplify that by sticking to the `defn` macro
   * `(defn my-function [x] (+ 5 x))`
 
@@ -80,6 +95,17 @@ class: center, middle, blackBackground
   * The function name
   * The function parameters in `[ ]`
   * The function implementation
+
+* You can call the function like so:
+  * `(my-function 4) ;; Result is 9 in this case`
+
+---
+
+# S-expressions
+![S-expression tree](https://upload.wikimedia.org/wikipedia/en/thumb/e/e3/Corrected_S-expression_tree_2.png/589px-Corrected_S-expression_tree_2.png)
+* This is a diagram for `(* 2 (+ 3 4))`, which evalutes to `(3 + 4) * 2 = 14`
+
+* Note that the function is still followed by its arguments to keep things consistent and easy to reason about!
 
 ---
 
@@ -137,7 +163,7 @@ class: center, middle, blackBackground
 ```
 ---
 
-# The `core.clj` file (1/2)
+# The routes in `core.clj`
 * You can find this file in the same folder as the `db.clj`
 
 * This file defines the main functions that are used to handle requests
@@ -145,14 +171,84 @@ class: center, middle, blackBackground
 * We need to implement each route so that a user can add a contact and view all contacts, including the helper files needed for these functions
 
 * Defining empty routes that we will fill in later
+
 ```
 (defroutes contacts-app
   (GET "/contacts" []
-       (get-a-list-of-all-contacts))
+       (get-a-list-of-all-contacts)
   (POST "/contacts" request
-       (add-the-note-in-the-contacts)))
+        (add-a-contact))
 ```
 
+---
+# The routes in `core.clj`
+
+```
+(defroutes contacts-app
+  (GET "/contacts" []
+       {:status 200
+        :body (db/get-items)}
+  (POST "/contacts" request
+        (db/add-item (:body request))))
+```
+* The `POST` route can also be written as follows:
+```
+  (POST "/contacts" request
+        (-> request
+            :body
+            db/add-item)))
+```
+---
+# The main functions
+```
+(defn handler
+  []
+  (-> contacts-app
+      access-headers
+      (wrap-json-body {:keywords? true})
+      wrap-json-response))
+
+(defn -main
+  []
+  (do (db/create-table)
+      (println "Running...")
+      (run-server (handler) {:port (read-string (System/getenv "PORT"))})))
+```
+
+* The `handler` function can also be written as this mess:
+```
+(defn handler
+  []
+  (wrap-json-response (wrap-json-body (access-headers contacts-app))
+                        {:keywords? true}))
+ ```
+
+---
+# Who's JSON?
+```
+{
+    "id": 1,
+    "name": "A green door",
+    "price": 12.50,
+    "tags": ["home", "green"]
+}
+```
+
+---
+
+# Deploy!
+* Go to http://github.com/hivinay/contacts-backend-clj
+  * Click the purple button and follow the instructions on Heroku
+
+  * Note the address of your app (you can choose your own)
+
+* Once it's deployed, you can:
+  * Go to `hivinay.com/contacts-backend-clj` and change the app name in the URL to your Heroku app (or just use mine!)
+
+  * Use `curl` to test it out with (replacing your app path):
+      * View: `curl http://contacts-clj.herokuapp.com/contacts`
+
+      * Add: `curl -d '{"name":"vinay", "email":"my@email.com"}' contacts-clj.herokuapp.com/contacts`
 
     </textarea>
     <script src="https://gnab.github.io/remark/downloads/remark-latest.min.js">
